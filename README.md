@@ -68,7 +68,7 @@ ising2D_gpu -L 8 -m -W 26624 -i 2
 ## File description
 
 ### Random123/
-Random123 is a library of "counter-based" random number generators
+Random123 is a library of "counter-based" random number generators  
 Can be used with CPUs and CPUs.
 
 from D. E. Shaw Research:
@@ -101,6 +101,12 @@ This file is shared between CPU and GPU implementations.
 
 ## Generated output
 
+The subdirectory ~example/~ includes sample outputs generated on a Tesla K20m using the following command:
+
+```bash
+ising2d_gpu -L 16 -W 26624
+```
+
 ### stats.dat
 
 This file is used to store all simulational parameters as well as statistics of the simulation.  
@@ -116,7 +122,7 @@ Information included in this file is:
 - number of measurement updates per worker
 - total number of updates per worker
 
-### iterations.dat
+### run_iterations.dat
 
 In this file all iterations until convergence (flat histogram) are accumulated.  
 The header includes the iteration number, width of the covered energy range, number of measurement updates and the Kullback-Leibler parameter.  
