@@ -101,7 +101,7 @@ This file is shared between CPU and GPU implementations.
 
 ## Generated output
 
-The subdirectory ~example/~ includes sample outputs generated on a Tesla K20m using the following command:
+The subdirectory `example/` includes sample outputs generated on a Tesla K20m using the following command:
 
 ```bash
 ising2d_gpu -L 16 -W 26624
