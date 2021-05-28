@@ -1,0 +1,29 @@
+PROJECT(cudamuca)
+
+CMAKE_MINIMUM_REQUIRED(VERSION 3.12 FATAL_ERROR)
+
+OPTION(USE_CUDA "Use CUDA" ON)
+
+ENABLE_LANGUAGE("CUDA")
+FIND_PACKAGE(MPI REQUIRED)
+
+# GPU
+ADD_EXECUTABLE(
+    ising2D_gpu
+    ising2D.cu
+    ising2D_io.hpp
+)
+SET_PROPERTY(TARGET ising2D_gpu PROPERTY CUDA_ARCHITECTURES 70 75)
+TARGET_INCLUDE_DIRECTORIES(ising2D_gpu PUBLIC "Random123/include/")
+TARGET_COMPILE_OPTIONS(ising2D_gpu PRIVATE -lineinfo -Xcompiler -Wall,-Wno-unused-function,-O3)
+
+# CPU
+ADD_EXECUTABLE(
+    ising2D_cpu
+    ising2D.cpp
+    ising2D_io.hpp
+)
+TARGET_INCLUDE_DIRECTORIES(ising2D_cpu PUBLIC "Random123/include/")
+TARGET_LINK_LIBRARIES(ising2D_cpu PUBLIC MPI::MPI_CXX)
+TARGET_COMPILE_OPTIONS(ising2D_cpu PRIVATE -pedantic -Wall -Wextra -O3)
+TARGET_COMPILE_FEATURES(ising2D_cpu PRIVATE cxx_std_11)
