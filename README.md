@@ -15,7 +15,7 @@ This work is licensed under a Creative Commons Attribution 4.0 International Lic
 - CUDA capable GPU
 - NVIDIA CUDA Toolkit 6.5+
 - C++11 compatible compiler (tested with GNU compiler)
-- MPI 2.2 compiler with C++ bindings (tested with GNU compiler and OpenMPI)
+- MPI >= 2.2 compiler (tested with GNU compiler and OpenMPI)
 - recent version Linux or macOS, (maybe Windows)
 
 ## Building
