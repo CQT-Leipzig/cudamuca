@@ -119,9 +119,13 @@ int main(int argc, char* argv[])
   parseArgs(argc, argv);
 
   // initialize MPI
-  MPI::Init();
-  unsigned WORKER = static_cast<unsigned>(MPI::COMM_WORLD.Get_rank());
-  NUM_WORKERS = static_cast<unsigned>(MPI::COMM_WORLD.Get_size());
+  MPI_Init(&argc, &argv);
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  unsigned WORKER = static_cast<unsigned>(rank);
+  int mpi_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  NUM_WORKERS = static_cast<unsigned>(mpi_size);
 
   // initialize local (LxL) lattice
   RNG rng;
@@ -165,10 +169,10 @@ int main(int argc, char* argv[])
   // main iteration loop
   for (size_t k = 0; k < MAX_ITER; k++) {
     // start timer
-    MPI::COMM_WORLD.Barrier();
+    MPI_Barrier(MPI_COMM_WORLD);
   	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     // distribute weight of rank0 to all
-    MPI::COMM_WORLD.Bcast(h_log_weights.data(), h_log_weights.size(), MPI::FLOAT, 0);
+    MPI_Bcast(h_log_weights.data(), h_log_weights.size(), MPI_FLOAT, 0, MPI_COMM_WORLD);
     // acceptance rate and correlation time corrected "random walk"
     // in factor 30 we adjusted acceptance rate and >L range requirement of our present Ising situation
     NUPDATES_THERM = 30*width;
@@ -187,7 +191,7 @@ int main(int argc, char* argv[])
     NUPDATES = static_cast<my_uint64>(nupdates_run)+1;
     mucaIteration(h_lattice, h_histograms, h_log_weights, energy, WORKER, k, seed, NUPDATES_THERM, NUPDATES);
     // merge histograms to rank0
-    MPI::COMM_WORLD.Reduce(h_histograms.data(), mpi_hist.data(), h_histograms.size(), MPI::UNSIGNED_LONG_LONG, MPI::SUM, 0);
+    MPI_Reduce(h_histograms.data(), mpi_hist.data(), h_histograms.size(), MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
     // stop timer
    	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
     long double elapsed = 1e9* (stop.tv_sec - start.tv_sec) + (stop.tv_nsec - start.tv_nsec);
@@ -210,11 +214,11 @@ int main(int argc, char* argv[])
       unsigned width_new = end-start;
       if (width_new > width) width = width_new;
     }
-    MPI::COMM_WORLD.Barrier();
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // Broadcast convergence state to all ranks
-    MPI::COMM_WORLD.Bcast(&converged, 1, MPI::INT, 0);
-    MPI::COMM_WORLD.Bcast(&width, 1, MPI::INT, 0);
+    MPI_Bcast(&converged, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (converged == 1) break;
 
     // update logarithmic weights with basic scheme if not converged on rank0
@@ -245,14 +249,14 @@ int main(int argc, char* argv[])
     size_t JACKS = 100;
     NUPDATES = NUPDATES_PRODUCTION/JACKS;
     // start timer
-    MPI::COMM_WORLD.Barrier();
+    MPI_Barrier(MPI_COMM_WORLD);
   	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     // loop over Jackknife bins
     for (size_t k = 0; k < JACKS; k++) {
       // local iterations on each task, writing to local histograms
       mucaIteration(h_lattice, h_histograms, h_log_weights, energy, WORKER, k, seed+2000, 0, NUPDATES);
       // merge histograms to rank0
-      MPI::COMM_WORLD.Reduce(h_histograms.data(), mpi_hist.data(), h_histograms.size(), MPI::UNSIGNED_LONG_LONG, MPI::SUM, 0);
+      MPI_Reduce(h_histograms.data(), mpi_hist.data(), h_histograms.size(), MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
       if (WORKER == 0) {
         std::stringstream filename;
@@ -263,7 +267,7 @@ int main(int argc, char* argv[])
       }
     }
     // stop timer
-    MPI::COMM_WORLD.Barrier();
+    MPI_Barrier(MPI_COMM_WORLD);
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
     if (WORKER==0) {
       std::cout << "production run updates  JACK: " << NUPDATES     << "*WORKER \n";
@@ -277,7 +281,7 @@ int main(int argc, char* argv[])
       sout.close();
     }
   }
-  MPI::Finalize();
+  MPI_Finalize();
 
   return 0;
 }
